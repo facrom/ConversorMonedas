@@ -5,10 +5,10 @@ import {
   FlatList,
   StyleSheet,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import { storageService } from '../services/storageService';
 import { Conversion } from '../types';
+import CustomAlert from '../components/CustomAlert';
 
 interface HistoryScreenProps {
   onNavigateBack: () => void;
@@ -17,6 +17,8 @@ interface HistoryScreenProps {
 export default function HistoryScreen({ onNavigateBack }: HistoryScreenProps) {
   const [conversions, setConversions] = useState<Conversion[]>([]);
   const [loading, setLoading] = useState(true);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [confirmAlertVisible, setConfirmAlertVisible] = useState(false);
 
   useEffect(() => {
     loadConversions();
@@ -27,33 +29,29 @@ export default function HistoryScreen({ onNavigateBack }: HistoryScreenProps) {
       const data = await storageService.getConversions();
       setConversions(data);
     } catch (error) {
-      Alert.alert('Error', 'No se pudo cargar el historial');
+      showAlert('Error', 'No se pudo cargar el historial');
     } finally {
       setLoading(false);
     }
   };
 
+  const showAlert = (title: string, message: string) => {
+    setAlertVisible(true);
+  };
+
   const handleClearHistory = () => {
-    Alert.alert(
-      'Confirmar',
-      '¿Estás seguro de que quieres borrar todo el historial?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Borrar',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await storageService.clearConversions();
-              setConversions([]);
-              Alert.alert('Éxito', 'Historial borrado');
-            } catch (error) {
-              Alert.alert('Error', 'No se pudo borrar el historial');
-            }
-          },
-        },
-      ]
-    );
+    setConfirmAlertVisible(true);
+  };
+
+  const confirmClearHistory = async () => {
+    try {
+      await storageService.clearConversions();
+      setConversions([]);
+      setConfirmAlertVisible(false);
+    } catch (error) {
+      setConfirmAlertVisible(false);
+      showAlert('Error', 'No se pudo borrar el historial');
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -118,6 +116,39 @@ export default function HistoryScreen({ onNavigateBack }: HistoryScreenProps) {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContainer}
         />
+      )}
+
+      <CustomAlert
+        visible={alertVisible}
+        title="Error"
+        message="No se pudo cargar el historial"
+        onClose={() => setAlertVisible(false)}
+      />
+
+      
+      {confirmAlertVisible && (
+        <View style={styles.confirmOverlay}>
+          <View style={styles.confirmBox}>
+            <Text style={styles.confirmTitle}>Confirmar</Text>
+            <Text style={styles.confirmMessage}>
+              ¿Estás seguro de que quieres borrar todo el historial?
+            </Text>
+            <View style={styles.confirmButtons}>
+              <TouchableOpacity
+                style={[styles.confirmButton, styles.cancelButton]}
+                onPress={() => setConfirmAlertVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.confirmButton, styles.deleteButton]}
+                onPress={confirmClearHistory}
+              >
+                <Text style={styles.deleteButtonText}>Borrar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
       )}
     </View>
   );
@@ -232,5 +263,62 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#999',
     textAlign: 'center',
+  },
+  confirmOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  confirmBox: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 24,
+    width: '80%',
+    maxWidth: 400,
+  },
+  confirmTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  confirmMessage: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 24,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  confirmButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  confirmButton: {
+    flex: 1,
+    borderRadius: 8,
+    padding: 14,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: '#e0e0e0',
+  },
+  cancelButtonText: {
+    color: '#333',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  deleteButton: {
+    backgroundColor: '#f44336',
+  },
+  deleteButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

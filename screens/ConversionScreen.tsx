@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
@@ -13,6 +12,7 @@ import { Picker } from '@react-native-picker/picker';
 import { currencyService } from '../services/currencyService';
 import { storageService } from '../services/storageService';
 import { Conversion } from '../types';
+import CustomAlert from '../components/CustomAlert';
 
 interface ConversionScreenProps {
   onNavigateToHistory: () => void;
@@ -28,17 +28,26 @@ export default function ConversionScreen({
   const [toCurrency, setToCurrency] = useState('EUR');
   const [result, setResult] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertTitle, setAlertTitle] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
 
   const currencies = currencyService.getPopularCurrencies();
 
+  const showAlert = (title: string, message: string) => {
+    setAlertTitle(title);
+    setAlertMessage(message);
+    setAlertVisible(true);
+  };
+
   const handleConvert = async () => {
     if (!amount || parseFloat(amount) <= 0) {
-      Alert.alert('Error', 'Por favor ingresa una cantidad válida');
+      showAlert('Error', 'Por favor ingresa una cantidad válida');
       return;
     }
 
     if (fromCurrency === toCurrency) {
-      Alert.alert('Error', 'Selecciona monedas diferentes');
+      showAlert('Error', 'Selecciona monedas diferentes');
       return;
     }
 
@@ -65,7 +74,7 @@ export default function ConversionScreen({
 
       await storageService.saveConversion(conversion);
     } catch (error) {
-      Alert.alert('Error', 'No se pudo realizar la conversión. Verifica tu conexión.');
+      showAlert('Error', 'No se pudo realizar la conversión. Verifica tu conexión.');
     } finally {
       setLoading(false);
     }
@@ -174,6 +183,13 @@ export default function ConversionScreen({
           )}
         </TouchableOpacity>
       </View>
+
+      <CustomAlert
+        visible={alertVisible}
+        title={alertTitle}
+        message={alertMessage}
+        onClose={() => setAlertVisible(false)}
+      />
     </ScrollView>
   );
 }

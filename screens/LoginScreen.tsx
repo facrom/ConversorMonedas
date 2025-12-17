@@ -5,11 +5,11 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { storageService } from '../services/storageService';
+import CustomAlert from '../components/CustomAlert';
 
 interface LoginScreenProps {
   onLogin: () => void;
@@ -18,16 +18,26 @@ interface LoginScreenProps {
 export default function LoginScreen({ onLogin }: LoginScreenProps) {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertTitle, setAlertTitle] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
+
+  const showAlert = (title: string, message: string) => {
+    setAlertTitle(title);
+    setAlertMessage(message);
+    setAlertVisible(true);
+  };
 
   const handleLogin = async () => {
     if (!username.trim() || !email.trim()) {
-      Alert.alert('Error', 'Por favor completa todos los campos');
+      showAlert('Error', 'Por favor completa todos los campos');
       return;
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      Alert.alert('Error', 'Por favor ingresa un email válido');
+      showAlert('Error', 'Por favor ingresa un email válido (debe contener @)');
       return;
     }
 
@@ -35,7 +45,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
       await storageService.saveUser({ username, email });
       onLogin();
     } catch (error) {
-      Alert.alert('Error', 'No se pudo iniciar sesión');
+      showAlert('Error', 'No se pudo iniciar sesión');
     }
   };
 
@@ -82,6 +92,13 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
           </TouchableOpacity>
         </View>
       </View>
+
+      <CustomAlert
+        visible={alertVisible}
+        title={alertTitle}
+        message={alertMessage}
+        onClose={() => setAlertVisible(false)}
+      />
     </KeyboardAvoidingView>
   );
 }
