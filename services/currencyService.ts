@@ -1,18 +1,18 @@
 import axios from 'axios';
 import { ExchangeRateResponse } from '../types';
 
-// API gratuita de ExchangeRate-API
-const API_KEY = 'YOUR_API_KEY'; // Puedes obtener una gratis en https://www.exchangerate-api.com/
+// API ExchangeRate
+const API_KEY = 'API_KEY'; // 
 const BASE_URL = 'https://v6.exchangerate-api.com/v6';
 
-// API alternativa gratuita sin necesidad de key (con límites)
+// API  sin necesidad de key 
 const FREE_API_URL = 'https://api.exchangerate-api.com/v4/latest';
 
 export const currencyService = {
   // Obtener tasas de cambio para una moneda base
   async getExchangeRates(baseCurrency: string = 'USD'): Promise<ExchangeRateResponse> {
     try {
-      // Usando API gratuita sin key
+      
       const response = await axios.get(`${FREE_API_URL}/${baseCurrency}`);
       return {
         result: 'success',
@@ -48,7 +48,7 @@ export const currencyService = {
     }
   },
 
-  // Lista de monedas populares
+  
   getPopularCurrencies() {
     return [
       { code: 'USD', name: 'Dólar Estadounidense', symbol: '$' },
